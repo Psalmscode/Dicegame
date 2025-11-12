@@ -21,13 +21,14 @@ function init() {
   playing = true;
   targetScore = parseInt(targetInput.value) || 100;
 
-  targetDisplay.textContent = targetScore;
+  targetInput.disabled = false;
+  targetDisplay.textContent = `🎯 Target: ${targetScore}`;
+
   document.getElementById("score1").textContent = 0;
   document.getElementById("score2").textContent = 0;
   document.getElementById("current1").textContent = 0;
   document.getElementById("current2").textContent = 0;
   document.getElementById("activePlayer").textContent = "Player 1's Turn";
-
   document.getElementById("player1").classList.add("active");
   document.getElementById("player2").classList.remove("active");
 
@@ -57,8 +58,10 @@ function showDiceFace(number) {
 rollBtn.addEventListener("click", () => {
   if (!playing) return;
 
-  dice.classList.add("spin");
+  if (!targetInput.disabled) targetInput.disabled = true;
+  if (scores[activePlayer] + currentScore >= targetScore) return;
 
+  dice.classList.add("spin");
   const roll = Math.trunc(Math.random() * 6) + 1;
 
   setTimeout(() => {
@@ -68,10 +71,14 @@ rollBtn.addEventListener("click", () => {
     if (roll !== 1) {
       currentScore += roll;
       document.getElementById(`current${activePlayer + 1}`).textContent = currentScore;
+
+      if (scores[activePlayer] + currentScore >= targetScore) {
+        scores[activePlayer] += currentScore;
+        document.getElementById(`score${activePlayer + 1}`).textContent = scores[activePlayer];
+        declareWinner(activePlayer);
+      }
     } else {
-      scores[activePlayer] = 0;
       currentScore = 0;
-      document.getElementById(`score${activePlayer + 1}`).textContent = 0;
       document.getElementById(`current${activePlayer + 1}`).textContent = 0;
       switchPlayer();
     }
@@ -85,10 +92,7 @@ holdBtn.addEventListener("click", () => {
   document.getElementById(`score${activePlayer + 1}`).textContent = scores[activePlayer];
 
   if (scores[activePlayer] >= targetScore) {
-    document.getElementById("activePlayer").textContent = `🏆 Player ${activePlayer + 1} Wins!`;
-    winnerDisplay.textContent = `🏆 Player ${activePlayer + 1} Wins!`;
-    winnerDisplay.classList.remove("hidden");
-    playing = false;
+    declareWinner(activePlayer);
   } else {
     currentScore = 0;
     document.getElementById(`current${activePlayer + 1}`).textContent = 0;
@@ -99,8 +103,10 @@ holdBtn.addEventListener("click", () => {
 newGameBtn.addEventListener("click", init);
 
 targetInput.addEventListener("input", () => {
-  targetScore = parseInt(targetInput.value) || 100;
-  targetDisplay.textContent = targetScore;
+  if (!targetInput.disabled) {
+    targetScore = parseInt(targetInput.value) || 100;
+    targetDisplay.textContent = `🎯 Target: ${targetScore}`;
+  }
 });
 
 function switchPlayer() {
@@ -108,4 +114,14 @@ function switchPlayer() {
   document.getElementById("activePlayer").textContent = `Player ${activePlayer + 1}'s Turn`;
   document.getElementById("player1").classList.toggle("active");
   document.getElementById("player2").classList.toggle("active");
+}
+
+function declareWinner(playerIndex) {
+  playing = false;
+  targetInput.disabled = false;
+  currentScore = 0;
+  document.getElementById(`current${playerIndex + 1}`).textContent = 0;
+  document.getElementById("activePlayer").textContent = `🏆 Player ${playerIndex + 1} Wins!`;
+  winnerDisplay.textContent = `🏆 Player ${playerIndex + 1} Wins!`;
+  winnerDisplay.classList.remove("hidden");
 }
