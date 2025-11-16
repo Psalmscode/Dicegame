@@ -6,8 +6,9 @@ const targetInput = document.getElementById("targetInput");
 const targetDisplay = document.getElementById("targetValue");
 const winnerDisplay = document.getElementById("winnerDisplay");
 
-let scores, currentScore, activePlayer, playing, targetScore;
+let scores, currentScore, activePlayer, playing, targetScore, diceRollCount;
 
+// Create 9 dots for dice UI
 for (let i = 0; i < 9; i++) {
   const dot = document.createElement("div");
   dot.classList.add("dot");
@@ -19,20 +20,24 @@ function init() {
   currentScore = 0;
   activePlayer = 0;
   playing = true;
+  diceRollCount = 0;
   targetScore = parseInt(targetInput.value) || 100;
 
-  targetDisplay.textContent = targetScore;
+  targetInput.disabled = false;
+  targetDisplay.textContent = `${targetScore}`;
+
   document.getElementById("score1").textContent = 0;
   document.getElementById("score2").textContent = 0;
   document.getElementById("current1").textContent = 0;
   document.getElementById("current2").textContent = 0;
   document.getElementById("activePlayer").textContent = "Player 1's Turn";
-
   document.getElementById("player1").classList.add("active");
   document.getElementById("player2").classList.remove("active");
 
   winnerDisplay.classList.add("hidden");
   resetDice();
+
+  displayLeaderboard();
 }
 init();
 
@@ -56,10 +61,11 @@ function showDiceFace(number) {
 
 rollBtn.addEventListener("click", () => {
   if (!playing) return;
+  if (!targetInput.disabled) targetInput.disabled = true;
 
   dice.classList.add("spin");
-
   const roll = Math.trunc(Math.random() * 6) + 1;
+  diceRollCount++;
 
   setTimeout(() => {
     dice.classList.remove("spin");
@@ -68,10 +74,14 @@ rollBtn.addEventListener("click", () => {
     if (roll !== 1) {
       currentScore += roll;
       document.getElementById(`current${activePlayer + 1}`).textContent = currentScore;
+
+      if (scores[activePlayer] + currentScore >= targetScore) {
+        scores[activePlayer] += currentScore;
+        document.getElementById(`score${activePlayer + 1}`).textContent = scores[activePlayer];
+        declareWinner(activePlayer);
+      }
     } else {
-      scores[activePlayer] = 0;
       currentScore = 0;
-      document.getElementById(`score${activePlayer + 1}`).textContent = 0;
       document.getElementById(`current${activePlayer + 1}`).textContent = 0;
       switchPlayer();
     }
@@ -85,10 +95,7 @@ holdBtn.addEventListener("click", () => {
   document.getElementById(`score${activePlayer + 1}`).textContent = scores[activePlayer];
 
   if (scores[activePlayer] >= targetScore) {
-    document.getElementById("activePlayer").textContent = `🏆 Player ${activePlayer + 1} Wins!`;
-    winnerDisplay.textContent = `🏆 Player ${activePlayer + 1} Wins!`;
-    winnerDisplay.classList.remove("hidden");
-    playing = false;
+    declareWinner(activePlayer);
   } else {
     currentScore = 0;
     document.getElementById(`current${activePlayer + 1}`).textContent = 0;
@@ -99,8 +106,10 @@ holdBtn.addEventListener("click", () => {
 newGameBtn.addEventListener("click", init);
 
 targetInput.addEventListener("input", () => {
-  targetScore = parseInt(targetInput.value) || 100;
-  targetDisplay.textContent = targetScore;
+  if (!targetInput.disabled) {
+    targetScore = parseInt(targetInput.value) || 100;
+    targetDisplay.textContent = targetScore;
+  }
 });
 
 function switchPlayer() {
@@ -108,4 +117,74 @@ function switchPlayer() {
   document.getElementById("activePlayer").textContent = `Player ${activePlayer + 1}'s Turn`;
   document.getElementById("player1").classList.toggle("active");
   document.getElementById("player2").classList.toggle("active");
+}
+
+//LEADERBOARD SYSTEM WITH EFFICIENCY 
+function getLeaderboard() {
+  return JSON.parse(localStorage.getItem("leaderboard")) || [];
+}
+
+function saveLeaderboard(board) {
+  localStorage.setItem("leaderboard", JSON.stringify(board));
+}
+
+function updateLeaderboard(entry) {
+  const leaderboard = getLeaderboard();
+  leaderboard.push(entry);
+
+  // Sort by efficiency descending
+  leaderboard.sort((a, b) => b.efficiency - a.efficiency);
+
+  // Keep only top 10
+  if (leaderboard.length > 10) leaderboard.length = 10;
+
+  saveLeaderboard(leaderboard);
+  displayLeaderboard();
+}
+
+function displayLeaderboard() {
+  const leaderboard = getLeaderboard();
+  const container = document.getElementById("leaderboardList");
+  if (!container) return;
+
+  container.innerHTML = leaderboard
+    .map((entry, i) => `
+      <li>
+        <div class="lb-entry">
+          <span class="lb-title">${i + 1}. ${entry.player}</span>
+          <div class="lb-details">
+            <span>Target: ${entry.target}</span>
+            <span>Rolls: ${entry.rolls}</span>
+            <span>Efficiency: ${entry.efficiency}</span>
+            <small>${entry.date}</small>
+          </div>
+        </div>
+      </li>
+    `).join('');
+}
+
+function declareWinner(playerIndex) {
+  playing = false;
+  targetInput.disabled = false;
+
+  // Calculate efficiency BEFORE resetting
+  const efficiency = (targetScore / diceRollCount).toFixed(2);
+
+  // Reset current score display
+  currentScore = 0;
+  document.getElementById(`current${playerIndex + 1}`).textContent = 0;
+  document.getElementById("activePlayer").textContent = `🏆 Player ${playerIndex + 1} Wins!`;
+  winnerDisplay.textContent = `🏆 Player ${playerIndex + 1} Wins!`;
+  winnerDisplay.classList.remove("hidden");
+
+  // Create leaderboard entry
+  const entry = {
+    player: `Player ${playerIndex + 1}`,
+    date: new Date().toLocaleString(),
+    target: targetScore,
+    rolls: diceRollCount,
+    efficiency: parseFloat(efficiency)
+  };
+
+  updateLeaderboard(entry);
 }
