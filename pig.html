@@ -3,19 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dice Game</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Dice Challenge</title>
+  <link rel="stylesheet" href="pig.css">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
 
   <div class="game-container">
-    <!-- ✅ FIXED: Only one target text handled by JS -->
-    <h1 id="targetValue">🎯 Target: 100</h1>
-    <button id="leaderboardBtn" class="leaderboard-btn">
-  🏆 Leaderboard
-    </button>
-
+    <h1 id="targetDisplay">🎯 Target: <span id="targetValue">100</span></h1>
 
     <div class="top-controls">
       <div class="control-item">
@@ -68,7 +63,6 @@
     <div id="winnerDisplay" class="winner hidden"></div>
   </div>
 
-  <script src="script.js"></script>
+  <script src="pig.js"></script>
 </body>
 </html>
-🎗
