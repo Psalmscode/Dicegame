@@ -5,8 +5,10 @@ const newGameBtn = document.getElementById("newGame");
 const targetInput = document.getElementById("targetInput");
 const targetDisplay = document.getElementById("targetValue");
 const winnerDisplay = document.getElementById("winnerDisplay");
+const leaderboardBtn = document.getElementById("leaderboardBtn");
 
 let scores, currentScore, activePlayer, playing, targetScore;
+let rollCount = 0; 
 
 for (let i = 0; i < 9; i++) {
   const dot = document.createElement("div");
@@ -19,8 +21,9 @@ function init() {
   currentScore = 0;
   activePlayer = 0;
   playing = true;
-  targetScore = parseInt(targetInput.value) || 100;
+  rollCount = 0; 
 
+  targetScore = parseInt(targetInput.value) || 100;
   targetInput.disabled = false;
   targetDisplay.textContent = `🎯 Target: ${targetScore}`;
 
@@ -55,8 +58,26 @@ function showDiceFace(number) {
   faces[number].forEach(i => dots[i - 1].classList.add("active"));
 }
 
+function saveGameResult(winnerName, diceRolls, finalScore) {
+  const result = {
+    winner: winnerName,
+    rolls: diceRolls,
+    score: finalScore,
+    date: new Date().toLocaleString()
+  };
+
+  let leaderboard = JSON.parse(localStorage.getItem("diceLeaderboard")) || [];
+  leaderboard.push(result);
+
+  leaderboard.sort((a, b) => a.rolls - b.rolls);
+
+  localStorage.setItem("diceLeaderboard", JSON.stringify(leaderboard));
+}
+
 rollBtn.addEventListener("click", () => {
   if (!playing) return;
+
+  rollCount++; 
 
   if (!targetInput.disabled) targetInput.disabled = true;
   if (scores[activePlayer] + currentScore >= targetScore) return;
@@ -119,9 +140,19 @@ function switchPlayer() {
 function declareWinner(playerIndex) {
   playing = false;
   targetInput.disabled = false;
+
+  const winnerName = `Player ${playerIndex + 1}`;
+  const finalScore = scores[playerIndex];
+
+  saveGameResult(winnerName, rollCount, finalScore);
+
   currentScore = 0;
   document.getElementById(`current${playerIndex + 1}`).textContent = 0;
-  document.getElementById("activePlayer").textContent = `🏆 Player ${playerIndex + 1} Wins!`;
-  winnerDisplay.textContent = `🏆 Player ${playerIndex + 1} Wins!`;
+  document.getElementById("activePlayer").textContent = `🏆 ${winnerName} Wins!`;
+  winnerDisplay.textContent = `🏆 ${winnerName} Wins!`;
   winnerDisplay.classList.remove("hidden");
 }
+
+leaderboardBtn.addEventListener("click", () => {
+  window.location.href = "leaderboard.html";
+});
