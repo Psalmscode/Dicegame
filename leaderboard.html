@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dice Leaderboard</title>
+
+<style>
+  body {
+    background: #111;
+    color: #fff;
+    font-family: Poppins, sans-serif;
+    padding: 20px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    table-layout: fixed;
+  }
+
+  th, td {
+    padding: 12px;
+    border-bottom: 1px solid #444;
+    text-align: left;
+  }
+
+  th {
+    background: #00d9ff;
+    color: #000;
+    font-weight: bold;
+  }
+
+  tbody tr {
+    background: #181818;
+  }
+
+  tbody tr:nth-child(even) {
+    background: #222; 
+  }
+
+  th:nth-child(1), td:nth-child(1) { width: 70px; }     
+  th:nth-child(2), td:nth-child(2) { width: 150px; }   
+  th:nth-child(3), td:nth-child(3) { width: 120px; }   
+  th:nth-child(4), td:nth-child(4) { width: 120px; }    
+  th:nth-child(5), td:nth-child(5) { width: 120px; }   
+
+  button {
+    padding: 10px 15px;
+    background: #00d9ff;
+    color: black;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 15px;
+  }
+</style>
+
+</head>
+<body>
+
+<button onclick="window.location.href='index.html'">⬅ Back to Game</button>
+
+<h2>🏆 Dice Game Leaderboard</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Rank</th>
+      <th>Winner</th>
+      <th>Dice Rolls</th>
+      <th>Final Score</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody id="board"></tbody>
+</table>
+
+<script>
+  const board = document.getElementById("board");
+  const data = JSON.parse(localStorage.getItem("diceLeaderboard")) || [];
+
+  data.forEach((entry, index) => {
+    let row = `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${entry.winner}</td>
+        <td>${entry.rolls}</td>
+        <td>${entry.score}</td>
+        <td>${entry.date}</td>
+      </tr>
+    `;
+    board.innerHTML += row;
+  });
+</script>
+
+</body>
+</html>

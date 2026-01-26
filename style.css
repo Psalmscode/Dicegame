@@ -147,6 +147,23 @@ button:hover {
   color: #00d9ff;
 }
 
+.leaderboard-btn {
+  margin: 15px 0;
+  padding: 10px 15px;
+  background: #00d9ff;
+  color: #000;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.leaderboard-btn:hover {
+  background: #00b8e6;
+}
+
+
 .winner {
   position: absolute;
   top: 45%;

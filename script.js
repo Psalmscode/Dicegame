@@ -5,8 +5,10 @@ const newGameBtn = document.getElementById("newGame");
 const targetInput = document.getElementById("targetInput");
 const targetDisplay = document.getElementById("targetValue");
 const winnerDisplay = document.getElementById("winnerDisplay");
+const leaderboardBtn = document.getElementById("leaderboardBtn");
 
 let scores, currentScore, activePlayer, playing, targetScore;
+let rollCount = 0; 
 
 for (let i = 0; i < 9; i++) {
   const dot = document.createElement("div");
@@ -19,15 +21,17 @@ function init() {
   currentScore = 0;
   activePlayer = 0;
   playing = true;
-  targetScore = parseInt(targetInput.value) || 100;
+  rollCount = 0; 
 
-  targetDisplay.textContent = targetScore;
+  targetScore = parseInt(targetInput.value) || 100;
+  targetInput.disabled = false;
+  targetDisplay.textContent = `🎯 Target: ${targetScore}`;
+
   document.getElementById("score1").textContent = 0;
   document.getElementById("score2").textContent = 0;
   document.getElementById("current1").textContent = 0;
   document.getElementById("current2").textContent = 0;
   document.getElementById("activePlayer").textContent = "Player 1's Turn";
-
   document.getElementById("player1").classList.add("active");
   document.getElementById("player2").classList.remove("active");
 
@@ -54,11 +58,31 @@ function showDiceFace(number) {
   faces[number].forEach(i => dots[i - 1].classList.add("active"));
 }
 
+function saveGameResult(winnerName, diceRolls, finalScore) {
+  const result = {
+    winner: winnerName,
+    rolls: diceRolls,
+    score: finalScore,
+    date: new Date().toLocaleString()
+  };
+
+  let leaderboard = JSON.parse(localStorage.getItem("diceLeaderboard")) || [];
+  leaderboard.push(result);
+
+  leaderboard.sort((a, b) => a.rolls - b.rolls);
+
+  localStorage.setItem("diceLeaderboard", JSON.stringify(leaderboard));
+}
+
 rollBtn.addEventListener("click", () => {
   if (!playing) return;
 
-  dice.classList.add("spin");
+  rollCount++; 
 
+  if (!targetInput.disabled) targetInput.disabled = true;
+  if (scores[activePlayer] + currentScore >= targetScore) return;
+
+  dice.classList.add("spin");
   const roll = Math.trunc(Math.random() * 6) + 1;
 
   setTimeout(() => {
@@ -68,10 +92,14 @@ rollBtn.addEventListener("click", () => {
     if (roll !== 1) {
       currentScore += roll;
       document.getElementById(`current${activePlayer + 1}`).textContent = currentScore;
+
+      if (scores[activePlayer] + currentScore >= targetScore) {
+        scores[activePlayer] += currentScore;
+        document.getElementById(`score${activePlayer + 1}`).textContent = scores[activePlayer];
+        declareWinner(activePlayer);
+      }
     } else {
-      scores[activePlayer] = 0;
       currentScore = 0;
-      document.getElementById(`score${activePlayer + 1}`).textContent = 0;
       document.getElementById(`current${activePlayer + 1}`).textContent = 0;
       switchPlayer();
     }
@@ -85,10 +113,7 @@ holdBtn.addEventListener("click", () => {
   document.getElementById(`score${activePlayer + 1}`).textContent = scores[activePlayer];
 
   if (scores[activePlayer] >= targetScore) {
-    document.getElementById("activePlayer").textContent = `🏆 Player ${activePlayer + 1} Wins!`;
-    winnerDisplay.textContent = `🏆 Player ${activePlayer + 1} Wins!`;
-    winnerDisplay.classList.remove("hidden");
-    playing = false;
+    declareWinner(activePlayer);
   } else {
     currentScore = 0;
     document.getElementById(`current${activePlayer + 1}`).textContent = 0;
@@ -99,8 +124,10 @@ holdBtn.addEventListener("click", () => {
 newGameBtn.addEventListener("click", init);
 
 targetInput.addEventListener("input", () => {
-  targetScore = parseInt(targetInput.value) || 100;
-  targetDisplay.textContent = targetScore;
+  if (!targetInput.disabled) {
+    targetScore = parseInt(targetInput.value) || 100;
+    targetDisplay.textContent = `🎯 Target: ${targetScore}`;
+  }
 });
 
 function switchPlayer() {
@@ -109,3 +136,23 @@ function switchPlayer() {
   document.getElementById("player1").classList.toggle("active");
   document.getElementById("player2").classList.toggle("active");
 }
+
+function declareWinner(playerIndex) {
+  playing = false;
+  targetInput.disabled = false;
+
+  const winnerName = `Player ${playerIndex + 1}`;
+  const finalScore = scores[playerIndex];
+
+  saveGameResult(winnerName, rollCount, finalScore);
+
+  currentScore = 0;
+  document.getElementById(`current${playerIndex + 1}`).textContent = 0;
+  document.getElementById("activePlayer").textContent = `🏆 ${winnerName} Wins!`;
+  winnerDisplay.textContent = `🏆 ${winnerName} Wins!`;
+  winnerDisplay.classList.remove("hidden");
+}
+
+leaderboardBtn.addEventListener("click", () => {
+  window.location.href = "leaderboard.html";
+});
